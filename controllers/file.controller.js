@@ -183,28 +183,38 @@ const getUserDocuments = async(req, res) => {
 const getSharedDocuments = async(req, res) => {
     const emailID = req.email;
     try {
-        let allDocs = await fileModel.find();
+        const allDocs = await fileModel.find();
         if(!allDocs) {
-            return res.status(400).json("Error getting all owner's documents");
+            return res.status(400).json("Error getting all shared's documents");
         }
-        /// filter shared documents
-        allDocs = allDocs.map((doc) => {
+        // filter the docs
+        let filterDocs = allDocs.map((doc) => {
             const accessArray = doc.access;
-            for(obj of accessArray) {
-             if(obj.email === emailID){
-                 return doc;
-             }
+            if(accessArray.length != 0){
+                for(obj of accessArray){
+                    if(obj.email === emailID){
+                        console.log(doc);
+                        return doc;
+                    }
+                }
             }
-         });
-         /// filter shared documents
+        });
+
+        console.log(filterDocs);
+        for(f in filterDocs){
+            
+        }
+        console.log("Filter docs length = ", filterDocs.length);
+        if(filterDocs.length === 0){
+            console.log("Shared documents");
+            return res.status(201).json("No Shared Documents");
+        }
+        // filter the docs
         let docsArray = [];
         for(file of allDocs){
-        console.log(file);
         const decryptedFile = fileService.decrypt(file.content);
-        console.log(decryptedFile);
         const DecryptedBuffer = Buffer.from(decryptedFile).toString('base64');
-        console.log(DecryptedBuffer);
-        const kfile = {
+            const kfile = {
             _id: file._id,
             owner: file.owner,
             name: file.name,
@@ -217,10 +227,10 @@ const getSharedDocuments = async(req, res) => {
                 "decryptedBuffer": DecryptedBuffer
             });
         }
-        console.log("Files sent of owner's " , docsArray.length);
+        console.log("Shared Documents =  " , docsArray.length);
         return res.status(200).json(docsArray);
     } catch (error) {
-        // console.error(error.message);
+        console.error(error.message);
         return res.status(400).json(error.message);
     }
 }
